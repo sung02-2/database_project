@@ -1,7 +1,7 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
-import FishTank from "./pages/FishTank";
+import FishManagement from "./pages/FishManagement";
 import FeedInventory from "./pages/FeedInventory";
 import FeedingReminder from "./pages/FeedingReminder"; // 新增頁面
 
@@ -17,7 +17,7 @@ function App() {
               🏠 Dashboard
             </NavLink>
             <NavLink to="/tanks" className={({ isActive }) => isActive ? "text-blue-300 font-bold" : "hover:text-blue-200"}>
-              🐠 Fish Tanks
+              🐠 Fish Management
             </NavLink>
             <NavLink to="/feeds" className={({ isActive }) => isActive ? "text-blue-300 font-bold" : "hover:text-blue-200"}>
               🛒 Feed Inventory
@@ -32,7 +32,7 @@ function App() {
         <main className="flex-1 bg-gray-100 p-6 overflow-y-auto">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/tanks" element={<FishTank />} />
+            <Route path="/tanks" element={<FishManagement />} />
             <Route path="/feeds" element={<FeedInventory />} />
             <Route path="/reminder" element={<FeedingReminder />} />
           </Routes>
