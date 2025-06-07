@@ -1,5 +1,3 @@
-// src/pages/FeedReminder.jsx
-
 import { useEffect, useState } from "react";
 
 function FeedReminder() {
@@ -12,23 +10,22 @@ function FeedReminder() {
   }, []);
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-orange-700">🕒 Feeding Reminder</h1>
+    <div className="p-6 bg-gradient-to-b from-orange-50 to-white min-h-screen">
+      <h1 className="text-4xl font-extrabold mb-8 text-orange-800">🕒 Feeding Reminder</h1>
 
-      <table className="min-w-full bg-white shadow rounded">
-        <thead>
-          <tr className="bg-orange-100 text-left">
-            <th className="px-6 py-3">Tank ID</th>
-            <th className="px-6 py-3">Last Fed Time</th>
-            <th className="px-6 py-3">Feed Interval (hrs)</th>
-            <th className="px-6 py-3">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {reminders.map((r) => (
-            <tr key={r.TankID} className="hover:bg-orange-50">
-              <td className="px-6 py-4 font-semibold">Tank {r.TankID}</td>
-              <td className="px-6 py-4">
+      {reminders.length === 0 ? (
+        <p className="text-gray-500 italic">All tanks are well-fed at the moment.</p>
+      ) : (
+        reminders.map((r) => (
+          <div key={r.TankID} className="bg-white rounded-2xl shadow-lg p-6 mb-8 border-l-4 border-orange-400">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-orange-700">Tank {r.TankID}</h2>
+              <span className="text-sm text-red-600 font-semibold">{r.Status}</span>
+            </div>
+
+            <div className="text-gray-700 space-y-1">
+              <p>
+                <span className="font-semibold">Last Feed Time:</span>{" "}
                 {new Date(r.LastFeedTime).toLocaleString("en-US", {
                   year: "numeric",
                   month: "2-digit",
@@ -37,13 +34,47 @@ function FeedReminder() {
                   minute: "2-digit",
                   hour12: true,
                 })}
-              </td>
-              <td className="px-6 py-4">{r.FeedIntervalHours}</td>
-              <td className="px-6 py-4 text-red-600 font-semibold">{r.Status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </p>
+              <p>
+                <span className="font-semibold">Feed Interval:</span> {r.FeedIntervalHours} hours
+              </p>
+            </div>
+
+            {/* Feeds */}
+            <div className="mt-5">
+              <h3 className="text-lg font-semibold mb-2 text-orange-600">Required Feeds:</h3>
+              {r.Feeds.length === 0 ? (
+                <p className="text-gray-500 italic">No feed preferences found.</p>
+              ) : (
+                <table className="min-w-full border text-sm rounded overflow-hidden">
+                  <thead>
+                    <tr className="bg-orange-100 text-orange-900">
+                      <th className="px-4 py-2 text-left">Feed Name</th>
+                      <th className="px-4 py-2 text-left">Remaining</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {r.Feeds.map((feed) => (
+                      <tr key={feed.FeedID} className="border-t hover:bg-orange-50">
+                        <td className="px-4 py-2">{feed.FeedName}</td>
+                        <td className="px-4 py-2">{feed.RemainingQuantity}</td>
+                        <td className="px-4 py-2">
+                          {feed.RemainingQuantity < feed.RestockThreshold ? (
+                            <span className="text-red-600 font-semibold">⚠ Low Stock</span>
+                          ) : (
+                            <span className="text-green-600">OK</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }

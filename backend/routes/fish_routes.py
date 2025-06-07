@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import TankTable, FishSpecies
+from models import TankTable, FishSpecies, FeedTable, FeedingPreferences
 from config import db
 
 fish_bp = Blueprint("fish_bp", __name__)
@@ -38,7 +38,7 @@ def suggest_tanks():
             current_total = 0.0
 
         if tank.Capacity <= 0:
-            continue  # 避免除以 0
+            continue
 
         before_ratio = current_total / tank.Capacity
         after_ratio = (current_total + size) / tank.Capacity
@@ -61,10 +61,12 @@ def add_fish_group():
     size = data.get("size")
     habitat = data.get("habitat")
     tank_id = data.get("tank_id")
+    feed_name = data.get("feed_name")  # 前端要一併送上這欄
 
-    if not name or not habitat or not isinstance(size, int) or not isinstance(tank_id, int):
+    if not name or not habitat or not isinstance(size, int) or not isinstance(tank_id, int) or not feed_name:
         return jsonify({"error": "Missing or invalid input"}), 400
 
+    # 建立魚群
     new_group = FishSpecies(
         SpeciesName=name,
         Size=size,
@@ -73,7 +75,20 @@ def add_fish_group():
     db.session.add(new_group)
     db.session.commit()
 
-    return jsonify({"message": f"Fish group '{name}' added to tank {tank_id}."}), 200
+    # 找對應的 FeedID
+    feed = FeedTable.query.filter_by(FeedName=feed_name).first()
+    if not feed:
+        return jsonify({"error": "Feed not found"}), 404
+
+    # 建立 feeding preference（注意新 group 產生後才有 SpeciesID）
+    pref = FeedingPreferences(
+        SpeciesID=new_group.SpeciesID,
+        FeedID=feed.FeedID
+    )
+    db.session.add(pref)
+    db.session.commit()
+
+    return jsonify({"message": f"Fish group '{name}' added to tank {tank_id} with feed '{feed_name}'."}), 200
 
 @fish_bp.route("/tanks", methods=["GET"])
 def get_all_tanks():
@@ -91,6 +106,11 @@ def remove_fish_group(fish_id):
     fish = FishSpecies.query.get(fish_id)
     if not fish:
         return jsonify({"error": "Fish group not found"}), 404
+
+    # 刪除該魚群對應的 FeedingPreferences 記錄
+    db.session.query(FeedingPreferences).filter_by(SpeciesID=fish_id).delete()
+
     db.session.delete(fish)
     db.session.commit()
-    return jsonify({"message": "Fish group removed."})
+
+    return jsonify({"message": "Fish group and related feeding preference removed."})

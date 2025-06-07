@@ -28,3 +28,8 @@ class FishSpecies(db.Model):
     BelongTank = db.Column(db.Integer, db.ForeignKey('TankTable.TankID'), nullable=False)
 
     tank = db.relationship("TankTable", backref="fish_list")
+
+class FeedingPreferences(db.Model):
+    __tablename__ = "feedingpreferences"
+    SpeciesID = db.Column(db.Integer, primary_key=True)
+    FeedID = db.Column(db.Integer, primary_key=True)

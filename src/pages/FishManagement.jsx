@@ -5,6 +5,7 @@ function FishManagement() {
   const [groupName, setGroupName] = useState("");
   const [habitat, setHabitat] = useState("");
   const [groupSize, setGroupSize] = useState("");
+  const [selectedFeed, setSelectedFeed] = useState("");
   const [availableTanks, setAvailableTanks] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [tankList, setTankList] = useState([]);
@@ -43,7 +44,8 @@ function FishManagement() {
         name: groupName,
         size: parseInt(groupSize),
         habitat: habitat,
-        tank_id: tankId
+        tank_id: tankId,
+        feed_name: selectedFeed
       })
     })
       .then(res => res.json())
@@ -53,6 +55,7 @@ function FishManagement() {
         setGroupName("");
         setGroupSize("");
         setHabitat("");
+        setSelectedFeed("");
       });
   };
 
@@ -76,6 +79,19 @@ function FishManagement() {
     return "text-green-700 font-semibold";
   };
 
+  const renderFeedOptions = () => {
+    const feedNames = [
+      "General Feed A", "General Feed B", "All-Purpose Mix", "Universal Flake", "Community Tank Mix",
+      "Marine Formula", "Reef Fish Flake", "Saltwater Sinking Pellet", "Coral Feed", "Marine Shrimp Bits",
+      "Brackish Blend", "Estuary Flake", "Mangrove Formula", "Brackish Stick", "Brackish Protein Mix",
+      "Freshwater Flake", "Goldfish Pellets", "Tropical Fish Mix", "Herbivore Fresh Blend", "Betta Formula"
+    ];
+    if (habitat === "marine") return feedNames.slice(5, 10);
+    if (habitat === "brackish") return feedNames.slice(10, 15);
+    if (habitat === "freshwater") return feedNames.slice(15, 20);
+    return feedNames.slice(0, 5);
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-green-800">🐠 Fish Management</h1>
@@ -96,22 +112,12 @@ function FishManagement() {
           <>
             <div>
               <label className="block text-lg font-medium text-gray-700 mb-1">Fish Group Name</label>
-              <input
-                type="text"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                className="w-full border rounded p-2"
-                placeholder="e.g., Yellow Group A"
-              />
+              <input type="text" value={groupName} onChange={(e) => setGroupName(e.target.value)} className="w-full border rounded p-2" />
             </div>
 
             <div>
               <label className="block text-lg font-medium text-gray-700 mb-1">Habitat</label>
-              <select
-                value={habitat}
-                onChange={(e) => setHabitat(e.target.value)}
-                className="w-full border rounded p-2"
-              >
+              <select value={habitat} onChange={(e) => { setHabitat(e.target.value); setSelectedFeed(""); }} className="w-full border rounded p-2">
                 <option value="">-- Select habitat --</option>
                 <option value="freshwater">Freshwater</option>
                 <option value="brackish">Brackish</option>
@@ -121,24 +127,22 @@ function FishManagement() {
 
             <div>
               <label className="block text-lg font-medium text-gray-700 mb-1">Group size</label>
-              <input
-                type="number"
-                value={groupSize}
-                onChange={(e) => setGroupSize(e.target.value)}
-                className="w-40 border rounded p-2"
-              />
+              <input type="number" value={groupSize} onChange={(e) => setGroupSize(e.target.value)} className="w-40 border rounded p-2" />
             </div>
 
-            <button
-              onClick={handleCheck}
-              className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
+            <div>
+              <label className="block text-lg font-medium text-gray-700 mb-1">Select Feed</label>
+              <select value={selectedFeed} onChange={(e) => setSelectedFeed(e.target.value)} className="w-full border rounded p-2" disabled={!habitat}>
+                <option value="">-- Select a feed --</option>
+                {renderFeedOptions().map((feed, idx) => <option key={idx} value={feed}>{feed}</option>)}
+              </select>
+            </div>
+
+            <button onClick={handleCheck} className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
               🔍 Find Available Tanks
             </button>
 
-            {successMessage && (
-              <p className="mt-4 text-green-700 font-medium">✅ {successMessage}</p>
-            )}
+            {successMessage && <p className="mt-4 text-green-700 font-medium">✅ {successMessage}</p>}
 
             <div className="mt-6">
               <h2 className="text-xl font-semibold mb-2">Suggested Tanks</h2>
@@ -157,14 +161,9 @@ function FishManagement() {
                       <tr key={idx} className="hover:bg-green-50">
                         <td className="px-4 py-2">Tank {tank.TankID}</td>
                         <td className="px-4 py-2 capitalize">{tank.CrowdingBefore}</td>
-                        <td className={`px-4 py-2 capitalize ${getColor(tank.CrowdingBefore, tank.CrowdingAfter)}`}>
-                          {tank.CrowdingAfter}
-                        </td>
+                        <td className={`px-4 py-2 capitalize ${getColor(tank.CrowdingBefore, tank.CrowdingAfter)}`}>{tank.CrowdingAfter}</td>
                         <td className="px-4 py-2">
-                          <button
-                            onClick={() => handleAddFishGroup(tank.TankID)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                          >
+                          <button onClick={() => handleAddFishGroup(tank.TankID)} className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
                             📥 Add
                           </button>
                         </td>
@@ -182,20 +181,11 @@ function FishManagement() {
         {mode === "remove" && (
           <div className="mt-6">
             <label className="block text-lg font-medium text-gray-700 mb-1">Select Tank</label>
-            <select
-              value={selectedTank}
-              onChange={(e) => setSelectedTank(e.target.value)}
-              className="w-full border rounded p-2"
-            >
+            <select value={selectedTank} onChange={(e) => setSelectedTank(e.target.value)} className="w-full border rounded p-2">
               <option value="">-- Choose a tank --</option>
-              {tankList.map(t => (
-                <option key={t.TankID} value={t.TankID}>Tank {t.TankID}</option>
-              ))}
+              {tankList.map(t => <option key={t.TankID} value={t.TankID}>Tank {t.TankID}</option>)}
             </select>
-            <button
-              onClick={handleViewTankFish}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
+            <button onClick={handleViewTankFish} className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
               🐟 View Fish Groups
             </button>
 
@@ -214,10 +204,7 @@ function FishManagement() {
                       <td className="px-4 py-2">{fish.Name}</td>
                       <td className="px-4 py-2">{fish.Size}</td>
                       <td className="px-4 py-2">
-                        <button
-                          onClick={() => handleRemoveFish(fish.FishID)}
-                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                        >
+                        <button onClick={() => handleRemoveFish(fish.FishID)} className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
                           ❌ Remove
                         </button>
                       </td>
