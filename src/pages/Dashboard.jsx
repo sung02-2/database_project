@@ -1,17 +1,33 @@
-// src/pages/Dashboard.jsx
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
-  const tankStats = {
-    tankCount: 8,
-    feedRemaining: 25,
-    warningCount: 2,
-  };
+  const [tankStats, setTankStats] = useState({
+    tankCount: 0,
+    feedRemaining: 0,
+  });
 
-  const tankList = [
-    { id: 1, cleanliness: "GOOD", crowd: "Moderate", temp: 26.5 },
-    { id: 2, cleanliness: "GOOD", crowd: "Moderate", temp: 26.5 },
-    { id: 3, cleanliness: "GOOD", crowd: "Moderate", temp: 26.5 },
-  ];
+  const [tankList, setTankList] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/dashboard/summary")
+      .then((res) => res.json())
+      .then((data) => {
+        setTankStats({
+          tankCount: data.numberOfTanks,
+          feedRemaining: data.totalFeedKg,
+        });
+      });
+
+    fetch("http://localhost:5000/api/dashboard/tanks")
+      .then((res) => res.json())
+      .then((data) => setTankList(data));
+  }, []);
+
+  const handleViewDetail = (tankId) => {
+    navigate(`/tank/${tankId}`);
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -29,7 +45,9 @@ function Dashboard() {
         </div>
         <div className="bg-red-100 border-l-4 border-red-500 text-red-800 rounded-xl p-6 shadow-sm">
           <p className="text-sm uppercase tracking-wide font-semibold">Warnings</p>
-          <p className="text-4xl font-bold mt-2">{tankStats.warningCount}</p>
+          <p className="text-4xl font-bold mt-2">
+            {tankList.filter((tank) => tank.CleanlinessLevel === "BAD").length}
+          </p>
         </div>
       </div>
 
@@ -37,12 +55,27 @@ function Dashboard() {
         {/* 左側：魚缸卡片列表 */}
         <div className="col-span-2 space-y-4">
           {tankList.map((tank) => (
-            <div key={tank.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
-              <h3 className="text-xl font-semibold text-blue-700 mb-2">Tank {tank.id}</h3>
-              <p className="text-gray-600">🧼 Cleanliness: <span className="font-medium text-green-600">{tank.cleanliness}</span></p>
-              <p className="text-gray-600">👥 Crowded Level: <span className="font-medium">{tank.crowd}</span></p>
-              <p className="text-gray-600">🌡️ Current Temp: <span className="font-medium">{tank.temp}°C</span></p>
-              <button className="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">View Detail</button>
+            <div key={tank.TankID} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <h3 className="text-xl font-semibold text-blue-700 mb-2">Tank {tank.TankID}</h3>
+              <p className="text-gray-600">
+                🧼 Cleanliness:{" "}
+                <span
+                  className={`font-medium ${
+                    tank.CleanlinessLevel === "BAD" ? "text-red-600" : "text-green-600"
+                  }`}
+                >
+                  {tank.CleanlinessLevel}
+                </span>
+              </p>
+              <p className="text-gray-600">
+                👥 Crowded Level: <span className="font-medium">{tank.CrowdingLevel}</span>
+              </p>
+              <button
+                onClick={() => handleViewDetail(tank.TankID)}
+                className="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              >
+                View Detail
+              </button>
             </div>
           ))}
         </div>
@@ -50,7 +83,17 @@ function Dashboard() {
         {/* 右側：異常列表 */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-xl font-semibold text-red-700 mb-4">🚨 Abnormal Tank List</h3>
-          <p className="text-gray-500 italic">No alerts at the moment.</p>
+          {tankList.filter((tank) => tank.CleanlinessLevel === "BAD").length === 0 ? (
+            <p className="text-gray-500 italic">No alerts at the moment.</p>
+          ) : (
+            <ul className="list-disc list-inside text-gray-800">
+              {tankList
+                .filter((tank) => tank.CleanlinessLevel === "BAD")
+                .map((tank) => (
+                  <li key={tank.TankID}>Tank {tank.TankID} - Too Dirty</li>
+                ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

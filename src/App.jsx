@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-do
 import Dashboard from "./pages/Dashboard";
 import FishManagement from "./pages/FishManagement";
 import FeedInventory from "./pages/FeedInventory";
-import FeedingReminder from "./pages/FeedingReminder"; // 新增頁面
+import FeedingReminder from "./pages/FeedingReminder";
+import TankDetail from "./pages/TankDetail"; // ⭐ 新增匯入 TankDetail
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
             <Route path="/tanks" element={<FishManagement />} />
             <Route path="/feeds" element={<FeedInventory />} />
             <Route path="/reminder" element={<FeedingReminder />} />
+            <Route path="/tank/:id" element={<TankDetail />} /> {/* ⭐ 新增這條路由 */}
           </Routes>
         </main>
       </div>
