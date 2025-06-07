@@ -1,63 +1,49 @@
-from flask import Blueprint, jsonify
-from models import FeedTable, TankTable
+# routes/dashboard_routes.py
+
+from flask import Blueprint, jsonify, request
+from models import TankTable, FeedTable
 from config import db
-from datetime import datetime, timedelta
+from datetime import datetime
+from sqlalchemy import func
 
+dashboard_bp = Blueprint("dashboard_bp", __name__)
 
-dashboard_bp = Blueprint('dashboard_bp', __name__)
+CLEANLINESS_THRESHOLD = 0.5
 
+# ✅ 總覽資訊
 @dashboard_bp.route("/summary", methods=["GET"])
-def dashboard_summary():
-    num_tanks = TankTable.query.count()
+def get_summary():
+    # 固定測試時間（實際部署可改成 datetime.now()）
+    now = datetime(2025, 6, 3, 14, 20, 0)
+    now_str = now.strftime("%Y-%m-%d %H:%M")
 
-    # 飼料總量 (kg)
-    feeds = FeedTable.query.all()
-    total_feed_kg = round(sum(f.RemainingQuantity for f in feeds) / 1000, 2)  # 假設單位是 g → kg
-
-    # 異常魚缸數量（如 cleanliness < 0.3, crowding 高）
-    warning_tanks = TankTable.query.filter(
-        (TankTable.CleanlinessLevel < 0.3) |
-        (TankTable.CrowdingLevel == 'high')
-    ).count()
+    tank_count = TankTable.query.count()
+    total_feed = db.session.query(func.sum(FeedTable.RemainingQuantity)).scalar() or 0
 
     return jsonify({
-        "numberOfTanks": num_tanks,
-        "totalFeedKg": total_feed_kg,
-        "warningCount": warning_tanks
+        "currentTime": now_str,
+        "numberOfTanks": tank_count,
+        "totalFeedKg": round(total_feed, 2)
     })
 
-
+# ✅ 所有魚缸狀態
 @dashboard_bp.route("/tanks", methods=["GET"])
-def dashboard_tanks():
+def get_tanks():
     tanks = TankTable.query.all()
-    result = []
-    for t in tanks:
-        result.append({
-            "TankID": t.TankID,
-            "CleanlinessLevel": "GOOD" if t.CleanlinessLevel >= 0.4 else "BAD",
-            "CrowdingLevel": t.CrowdingLevel.capitalize(),
-        })
+    result = [{
+        "TankID": tank.TankID,
+        "CrowdingLevel": tank.CrowdingLevel,
+        "CleanlinessLevel": "GOOD" if tank.CleanlinessLevel >= CLEANLINESS_THRESHOLD else "BAD"
+    } for tank in tanks]
     return jsonify(result)
 
-
+# ✅ 異常魚缸列表
 @dashboard_bp.route("/abnormal-tanks", methods=["GET"])
 def abnormal_tanks():
-    now = datetime.now()
-    tanks = TankTable.query.all()
-    abnormal = []
-    for t in tanks:
-        # Cleanliness 過低、擁擠、超過餵食間隔時間
-        feed_due = False
-        if t.LastFeedTime and t.FeedIntervalHours:
-            next_feed = t.LastFeedTime + timedelta(hours=t.FeedIntervalHours)
-            feed_due = now > next_feed
-
-        if t.CleanlinessLevel < 0.3 or t.CrowdingLevel == 'high' or feed_due:
-            abnormal.append({
-                "TankID": t.TankID,
-                "CleanlinessLevel": t.CleanlinessLevel,
-                "CrowdingLevel": t.CrowdingLevel,
-                "FeedStatus": "Overdue" if feed_due else "OK"
-            })
-
-    return jsonify(abnormal)
+    tanks = TankTable.query.filter(TankTable.CleanlinessLevel < CLEANLINESS_THRESHOLD).all()
+    result = [{
+        "TankID": tank.TankID,
+        "CleanlinessLevel": tank.CleanlinessLevel,
+        "Status": "BAD"
+    } for tank in tanks]
+    return jsonify(result)

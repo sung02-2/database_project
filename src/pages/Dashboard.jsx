@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 
 function Dashboard() {
   const [tankStats, setTankStats] = useState({
     tankCount: 0,
-    feedRemaining: 0,
+    currentTime: "",
   });
 
   const [tankList, setTankList] = useState([]);
@@ -16,7 +17,7 @@ function Dashboard() {
       .then((data) => {
         setTankStats({
           tankCount: data.numberOfTanks,
-          feedRemaining: data.totalFeedKg,
+          currentTime: data.currentTime,
         });
       });
 
@@ -40,8 +41,12 @@ function Dashboard() {
           <p className="text-4xl font-bold mt-2">{tankStats.tankCount}</p>
         </div>
         <div className="bg-green-100 border-l-4 border-green-500 text-green-800 rounded-xl p-6 shadow-sm">
-          <p className="text-sm uppercase tracking-wide font-semibold">Feed Remaining</p>
-          <p className="text-4xl font-bold mt-2">{tankStats.feedRemaining} kg</p>
+          <p className="text-sm uppercase tracking-wide font-semibold">Current Time</p>
+          <p className="text-2xl font-bold mt-2">
+            {tankStats.currentTime
+              ? dayjs(tankStats.currentTime).format("YYYY/MM/DD HH:mm")
+              : "--"}
+          </p>
         </div>
         <div className="bg-red-100 border-l-4 border-red-500 text-red-800 rounded-xl p-6 shadow-sm">
           <p className="text-sm uppercase tracking-wide font-semibold">Warnings</p>

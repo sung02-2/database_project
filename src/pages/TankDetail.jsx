@@ -1,4 +1,3 @@
-// src/pages/TankDetail.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -8,7 +7,7 @@ function TankDetail() {
   const [tank, setTank] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/tanks/${id}`)
+    fetch(`http://localhost:5000/api/tank/${id}`)  // ✅ 改為正確路徑
       .then((res) => res.json())
       .then((data) => setTank(data))
       .catch(() => setTank(null));
@@ -38,17 +37,17 @@ function TankDetail() {
         <li>👥 Crowding Level: {tank.CrowdingLevel}</li>
         <li>🩼 Cleanliness Level: {tank.CleanlinessLevel}</li>
         <li>
-            ⏰ Last Feed Time:{" "}
-            {tank.LastFeedTime
-              ? new Date(tank.LastFeedTime).toLocaleString("en-US", {
-                 year: "numeric",
-                 month: "numeric",
-                 day: "numeric",
-                 hour: "numeric",
-                 minute: "2-digit",
-                 hour12: true,
-               })
-              : "N/A"}
+          ⏰ Last Feed Time:{" "}
+          {tank.LastFeedTime
+            ? new Date(tank.LastFeedTime).toLocaleString("en-US", {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })
+            : "N/A"}
         </li>
         <li>🕒 Feed Interval: {tank.FeedIntervalHours} hours</li>
       </ul>
@@ -58,14 +57,11 @@ function TankDetail() {
         <p className="text-gray-500 italic">No fish in this tank.</p>
       ) : (
         <ul className="list-disc list-inside text-gray-700">
-          {tank.FishSpecies.map((fish, index) => {
-            const quantity = parseInt(fish.Size);
-            return (
-              <li key={index}>
-                {fish.SpeciesName} × {Number.isInteger(quantity) ? quantity : "?"} fish
-              </li>
-            );
-          })}
+          {tank.FishSpecies.map((fish, index) => (
+            <li key={index}>
+              {fish.SpeciesName} – {fish.Size} cm2
+            </li>
+          ))}
         </ul>
       )}
     </div>
